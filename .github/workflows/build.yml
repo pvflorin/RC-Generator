@@ -1,0 +1,121 @@
+name: Build RC Generator for Windows and macOS
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --name "RC_Generator" --add-data "Planificare Elmet.xlsx;." --add-data "Tehnologii.xlsx;." --version-file "version_info.txt" --manifest "manifest.xml" route_card_coc_app.py
+    
+    - name: Create Windows installer folder
+      run: |
+        mkdir RC_Generator_Windows_Installer
+        copy "dist\RC_Generator.exe" "RC_Generator_Windows_Installer\"
+        copy "README_Installation.md" "RC_Generator_Windows_Installer\README.txt"
+        copy "Planificare Elmet.xlsx" "RC_Generator_Windows_Installer\"
+        copy "Tehnologii.xlsx" "RC_Generator_Windows_Installer\"
+    
+    - name: Upload Windows executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: RC_Generator_Windows
+        path: RC_Generator_Windows_Installer/
+        retention-days: 90
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build macOS application
+      run: |
+        pyinstaller --onefile --windowed --name "RC_Generator" --add-data "Planificare Elmet.xlsx:." --add-data "Tehnologii.xlsx:." route_card_coc_app.py
+        
+    - name: Create macOS app bundle
+      run: |
+        pyinstaller RC_Generator.spec
+        
+    - name: Create DMG
+      run: |
+        mkdir dmg_temp
+        cp -R "dist/RC Generator.app" dmg_temp/ 2>/dev/null || cp -R "dist/RC_Generator.app" dmg_temp/
+        ln -s /Applications dmg_temp/Applications
+        hdiutil create -volname "RC Generator" -srcfolder dmg_temp -ov -format UDZO "RC_Generator.dmg"
+        rm -rf dmg_temp
+    
+    - name: Create macOS installer folder
+      run: |
+        mkdir RC_Generator_macOS_Installer
+        cp "RC_Generator.dmg" "RC_Generator_macOS_Installer/"
+        cp "README_Installation.md" "RC_Generator_macOS_Installer/"
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: RC_Generator_macOS
+        path: RC_Generator_macOS_Installer/
+        retention-days: 90
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: RC_Generator_Windows
+        path: windows/
+        
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: RC_Generator_macOS
+        path: macos/
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          windows/*
+          macos/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
