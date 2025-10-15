@@ -18,7 +18,6 @@ import subprocess
 import platform
 from datetime import datetime
 from pathlib import Path
-from tkinter import simpledialog
 
 # Third-party imports
 import pandas as pd  # For reading Excel files
@@ -197,23 +196,36 @@ def verifica_si_selecteaza_fisier(nume_fisier, tip_fisier):
         return saved_path
     
     if not os.path.exists(file_path):
-        # Try to ask the user via a GUI dialog if tkinter is available, otherwise return None
+        # Try to ask the user via a GUI dialog
         try:
-            import tkinter as _tk
-            from tkinter import messagebox as _messagebox
-            from tkinter import filedialog as _filedialog
-            root = _tk.Tk()
-            root.withdraw()
-            raspuns = _messagebox.askyesno("Fișier lipsă", f"Fișierul '{file_path}' nu a fost găsit. Doriți să selectați manual fișierul de {tip_fisier}?")
-            if raspuns:
-                browsed_path = _filedialog.askopenfilename(title=f"Selectați fișierul de {tip_fisier}", filetypes=[("Excel Files", "*.xlsx")])
-                root.destroy()
+            from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
+            from PyQt6.QtCore import Qt
+            
+            # Ensure we have a QApplication instance
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication([])
+            
+            reply = QMessageBox.question(
+                None, 
+                "Fișier lipsă", 
+                f"Fișierul '{file_path}' nu a fost găsit. Doriți să selectați manual fișierul de {tip_fisier}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                browsed_path, _ = QFileDialog.getOpenFileName(
+                    None,
+                    f"Selectați fișierul de {tip_fisier}",
+                    "",
+                    "Excel Files (*.xlsx)"
+                )
                 if browsed_path:
                     save_file_path(key_name, browsed_path)
                     return browsed_path
-            root.destroy()
         except Exception:
-            # No GUI available (headless); cannot prompt user
+            # No GUI available; cannot prompt user
             return None
         return None
     else:
@@ -318,12 +330,18 @@ def gaseste_detalii_tehnologie(reper):
         else:
             # Try to show a GUI error if possible, otherwise just return the error message
             try:
-                import tkinter as _tk
-                from tkinter import messagebox as _messagebox
-                root = _tk.Tk()
-                root.withdraw()
-                _messagebox.showerror("Eroare Tehnologii", f"Reperul '{reper}' nu a fost găsit în fișierul de Tehnologii.xlsx. Nu există operații pentru acest reper.")
-                root.destroy()
+                from PyQt6.QtWidgets import QApplication, QMessageBox
+                
+                # Ensure we have a QApplication instance
+                app = QApplication.instance()
+                if app is None:
+                    app = QApplication([])
+                
+                QMessageBox.critical(
+                    None,
+                    "Eroare Tehnologii", 
+                    f"Reperul '{reper}' nu a fost găsit în fișierul de Tehnologii.xlsx. Nu există operații pentru acest reper."
+                )
             except Exception:
                 pass
             return None, f"Reperul '{reper}' nu a fost găsit în fișierul de Tehnologii."
