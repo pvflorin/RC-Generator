@@ -60,19 +60,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+        
+    - name: Debug Python and PyQt6 installation
+      run: |
+        python --version
+        python -c "import PyQt6; print('PyQt6 version:', PyQt6.QtCore.QT_VERSION_STR)"
+        python -c "import sys; print('Python executable:', sys.executable)"
     
     - name: Build macOS application
       run: |
-        pyinstaller --onefile --windowed --name "RC_Generator" --add-data "Planificare Elmet.xlsx:." --add-data "Tehnologii.xlsx:." route_card_coc_app.py
-        
-    - name: Create macOS app bundle
-      run: |
         pyinstaller RC_Generator.spec
+        
+    - name: Check build output
+      run: |
+        ls -la dist/
+        ls -la "dist/RC Generator.app" || echo "App not found with that name"
         
     - name: Create DMG
       run: |
         mkdir dmg_temp
-        cp -R "dist/RC Generator.app" dmg_temp/ 2>/dev/null || cp -R "dist/RC_Generator.app" dmg_temp/
+        cp -R "dist/RC Generator.app" dmg_temp/
         ln -s /Applications dmg_temp/Applications
         hdiutil create -volname "RC Generator" -srcfolder dmg_temp -ov -format UDZO "RC_Generator.dmg"
         rm -rf dmg_temp
