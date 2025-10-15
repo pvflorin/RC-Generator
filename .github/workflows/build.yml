@@ -124,11 +124,44 @@ jobs:
           exit 1
         fi
         
+    - name: Prepare app for distribution
+      run: |
+        echo "Preparing RC_Generator.app for distribution..."
+        # Remove extended attributes that cause Gatekeeper issues
+        xattr -cr "dist/RC_Generator.app" || echo "No extended attributes to remove"
+        
+        # Create installation instructions
+        cat > INSTALLATION_INSTRUCTIONS.txt << 'EOF'
+        RC Generator - Installation Instructions
+        ======================================
+        
+        IMPORTANT: This app is not signed with an Apple Developer certificate.
+        
+        To install and run RC Generator:
+        
+        1. Double-click the RC_Generator.dmg file
+        2. Drag RC_Generator.app to the Applications folder
+        3. Right-click on RC_Generator.app in Applications
+        4. Select "Open" from the menu
+        5. Click "Open" when macOS asks about the unverified developer
+        
+        Alternative method:
+        - Go to System Preferences → Security & Privacy → General
+        - Look for "RC_Generator was blocked" message
+        - Click "Open Anyway"
+        
+        The app is safe to use - this warning appears because we don't have 
+        an Apple Developer certificate for code signing.
+        
+        After the first successful open, macOS will remember your choice.
+        EOF
+        
     - name: Create DMG
       run: |
         mkdir dmg_temp
         if [ -d "dist/RC_Generator.app" ]; then
           cp -R "dist/RC_Generator.app" dmg_temp/
+          cp "INSTALLATION_INSTRUCTIONS.txt" dmg_temp/
         else
           echo "RC_Generator.app not found, checking what was built:"
           ls -la dist/
