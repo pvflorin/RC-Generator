@@ -60,6 +60,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+        # Install macOS specific dependencies
+        pip install dmgbuild || echo "dmgbuild not available, using hdiutil"
         
     - name: Debug Python and PyQt6 installation
       run: |
@@ -69,12 +71,23 @@ jobs:
     
     - name: Build macOS application
       run: |
-        pyinstaller RC_Generator.spec
+        set -e  # Exit on any error
+        echo "Starting PyInstaller build..."
+        pyinstaller --noconfirm --log-level=INFO RC_Generator.spec
+        echo "PyInstaller build completed"
         
     - name: Check build output
       run: |
+        echo "Checking dist directory:"
         ls -la dist/
-        ls -la "dist/RC Generator.app" || echo "App not found with that name"
+        echo "Checking if app exists:"
+        if [ -d "dist/RC Generator.app" ]; then
+          echo "✅ RC Generator.app created successfully"
+          ls -la "dist/RC Generator.app/"
+        else
+          echo "❌ RC Generator.app not found"
+          exit 1
+        fi
         
     - name: Create DMG
       run: |
