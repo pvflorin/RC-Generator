@@ -66,8 +66,35 @@ jobs:
     - name: Debug Python and PyQt6 installation
       run: |
         python --version
-        python -c "import PyQt6; print('PyQt6 version:', PyQt6.QtCore.QT_VERSION_STR)"
+        python -c "from PyQt6.QtCore import QT_VERSION_STR; print('PyQt6 version:', QT_VERSION_STR)"
         python -c "import sys; print('Python executable:', sys.executable)"
+        python -c "import PyQt6; print('PyQt6 installed successfully')"
+        python -c "import PyQt6.QtWidgets; print('PyQt6.QtWidgets imported successfully')"
+        python -c "import pandas; print('pandas imported successfully')"
+        python -c "import numpy; print('numpy imported successfully')"
+        python -c "import xlsxwriter; print('xlsxwriter imported successfully')"
+        python -c "import openpyxl; print('openpyxl imported successfully')"
+        
+    - name: Test script imports
+      run: |
+        python -c "
+        try:
+            import sys
+            import os
+            sys.path.insert(0, '.')
+            # Test imports without GUI initialization
+            print('Testing script imports...')
+            import pandas as pd
+            import numpy as np
+            from PyQt6.QtWidgets import QApplication
+            from PyQt6.QtCore import Qt
+            import xlsxwriter
+            import openpyxl
+            print('All imports successful!')
+        except Exception as e:
+            print(f'Import error: {e}')
+            sys.exit(1)
+        "
     
     - name: Build macOS application
       run: |
