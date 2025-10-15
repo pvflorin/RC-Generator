@@ -116,11 +116,11 @@ jobs:
         echo "Checking dist directory:"
         ls -la dist/
         echo "Checking if app exists:"
-        if [ -d "dist/RC Generator.app" ]; then
-          echo "✅ RC Generator.app created successfully"
-          ls -la "dist/RC Generator.app/"
+        if [ -d "dist/RC_Generator.app" ]; then
+          echo "✅ RC_Generator.app created successfully"
+          ls -la "dist/RC_Generator.app/"
         else
-          echo "❌ RC Generator.app not found"
+          echo "❌ RC_Generator.app not found"
           exit 1
         fi
         
