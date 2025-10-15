@@ -98,10 +98,18 @@ jobs:
     
     - name: Build macOS application
       run: |
-        set -e  # Exit on any error
-        echo "Starting PyInstaller build..."
-        pyinstaller --noconfirm --log-level=INFO RC_Generator.spec
-        echo "PyInstaller build completed"
+        pyinstaller --noconfirm --windowed --name "RC_Generator" \
+          --add-data "Planificare Elmet.xlsx:." \
+          --add-data "Tehnologii.xlsx:." \
+          --exclude-module tkinter \
+          --hidden-import PyQt6.QtCore \
+          --hidden-import PyQt6.QtGui \
+          --hidden-import PyQt6.QtWidgets \
+          --hidden-import pandas \
+          --hidden-import numpy \
+          --hidden-import xlsxwriter \
+          --hidden-import openpyxl \
+          route_card_coc_app.py
         
     - name: Check build output
       run: |
@@ -119,7 +127,13 @@ jobs:
     - name: Create DMG
       run: |
         mkdir dmg_temp
-        cp -R "dist/RC Generator.app" dmg_temp/
+        if [ -d "dist/RC_Generator.app" ]; then
+          cp -R "dist/RC_Generator.app" dmg_temp/
+        else
+          echo "RC_Generator.app not found, checking what was built:"
+          ls -la dist/
+          exit 1
+        fi
         ln -s /Applications dmg_temp/Applications
         hdiutil create -volname "RC Generator" -srcfolder dmg_temp -ov -format UDZO "RC_Generator.dmg"
         rm -rf dmg_temp
