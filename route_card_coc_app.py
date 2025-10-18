@@ -1402,8 +1402,13 @@ def ruleaza_aplicatia_pyqt():
                 mesaj, succes = genereaza_route_card_excel(detalii, folder_path)
                 if succes:
                     successes.append(f"{comanda_interna}")
-                    # Assume the file name is part of the success message
-                    file_path = mesaj.split("salvat în: ")[-1]
+                    # Extract file path from success message - handle both "salvat" and "salvată"
+                    if "salvat în: " in mesaj:
+                        file_path = mesaj.split("salvat în: ")[-1]
+                    elif "salvată în: " in mesaj:
+                        file_path = mesaj.split("salvată în: ")[-1]
+                    else:
+                        file_path = mesaj.split(": ")[-1]  # Fallback
                     generated_files_for_email.append((comanda_interna, file_path))
                 else:
                     errors.append(f"{comanda_interna}: {mesaj}")
@@ -1417,7 +1422,13 @@ def ruleaza_aplicatia_pyqt():
                 mesaj, succes = genereaza_declaratie_conformitate_excel(detalii, date_suplimentare, folder_path)
                 if succes:
                     successes.append(f"{comanda_interna}")
-                    file_path = mesaj.split("salvat în: ")[-1]
+                    # Extract file path from success message - handle both "salvat" and "salvată"
+                    if "salvat în: " in mesaj:
+                        file_path = mesaj.split("salvat în: ")[-1]
+                    elif "salvată în: " in mesaj:
+                        file_path = mesaj.split("salvată în: ")[-1]
+                    else:
+                        file_path = mesaj.split(": ")[-1]  # Fallback
                     generated_files_for_email.append((comanda_interna, file_path))
                 else:
                     errors.append(f"{comanda_interna}: {mesaj}")
