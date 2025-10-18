@@ -97,6 +97,44 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+# =============================================================
+# 2.5 UI CONTRAST FIX FOR WINDOWS
+# =============================================================
+
+def ensure_ui_contrast():
+    """Ensure readable text on light background (fix white-on-white on Windows)."""
+    import sys, os
+    try:
+        # Prefer Fusion style on Windows (more consistent)
+        if sys.platform == "win32":
+            os.environ.setdefault("QT_STYLE_OVERRIDE", "Fusion")
+        from PyQt6 import QtWidgets, QtGui
+        app = QtWidgets.QApplication.instance()
+        created_app = False
+        if app is None:
+            app = QtWidgets.QApplication([])
+            created_app = True
+        p = QtGui.QPalette()
+        p.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(240, 240, 240))
+        p.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(0, 0, 0))
+        p.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(255, 255, 255))
+        p.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor(0, 0, 0))
+        p.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(240, 240, 240))
+        p.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(0, 0, 0))
+        app.setPalette(p)
+        # Fallback: explicitly force widget text color
+        app.setStyleSheet("QLabel, QPushButton, QLineEdit, QTextEdit, QComboBox { color: #000000; }")
+        if created_app:
+            # we created a temporary app just to set the global palette; close it
+            app.quit()
+    except Exception:
+        # Fail silently if PyQt6 not available or something else fails
+        pass
+
+# =============================================================
+# 3. FILE HANDLING FUNCTIONS
+# =============================================================
+
 def get_saved_file_path(key_name, default_value):
     """Get saved file path from config file or registry"""
     if sys.platform.startswith('win'):
@@ -1700,6 +1738,10 @@ if __name__ == "__main__":
         print("Vă rugăm instalați pachetele necesare rulând în terminal:")
         print("pip install pandas xlsxwriter openpyxl")
         exit(1)
+    
+    # Apply UI contrast fixes before creating the real QApplication / launching GUI
+    ensure_ui_contrast()
+    
     # Default behavior: GUI. But allow CLI mode for headless use.
     parser = argparse.ArgumentParser(description="RC & COC Generator - GUI/CLI")
     parser.add_argument('--nogui', action='store_true', help='Run in non-GUI (CLI) mode')
