@@ -43,6 +43,19 @@ if sys.platform.startswith('win'):
 NUME_FISIER_COMENZI = ""
 NUME_FISIER_TEHNOLOGII = ""
 APP_NAME = "RC Generator"
+APP_VERSION = "1.1.5"
+
+# Function to read version from VERSION file if it exists
+def get_app_version():
+    """Read version from VERSION file, fallback to hardcoded version."""
+    try:
+        version_file = os.path.join(os.path.dirname(__file__), 'VERSION')
+        if os.path.exists(version_file):
+            with open(version_file, 'r') as f:
+                return f.read().strip()
+    except Exception:
+        pass
+    return APP_VERSION
 
 # Path configuration
 if sys.platform.startswith('win'):
@@ -1088,7 +1101,8 @@ def ruleaza_aplicatia_pyqt():
     app.setFont(QFont("Segoe UI", 10))
 
     window = QWidget()
-    window.setWindowTitle("RC & COC Generator")
+    version = get_app_version()
+    window.setWindowTitle(f"RC & COC Generator v{version}")
     window.setGeometry(100, 100, 800, 600)
 
     # Initialize global file paths
